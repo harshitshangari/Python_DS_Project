@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import FunctionTransformer
@@ -7,16 +6,14 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import Ridge
-from sklearn.ensemble import RandomForestRegressor
-import xgboost as xgb
-from xgboost.sklearn import XGBRegressor
-from sklearn.ensemble import BaggingRegressor, RandomForestRegressor, AdaBoostRegressor
-from sklearn.svm import SVR
 import catboost
 from catboost import CatBoostRegressor
-import lightgbm
-from lightgbm import LGBMRegressor
+
+# dataset website: https://dev.meteostat.net/bulk/hourly.html#endpoints
+# dataset 2020 https://bulk.meteostat.net/v2/hourly/2020/07156.csv.gz
+# dataset 2021 https://bulk.meteostat.net/v2/hourly/2021/07156.csv.gz
+# license https://dev.meteostat.net/terms.html#license
+
 
 def _encode_dates(X):
     X = X.copy()  # modify a copy of X
@@ -68,7 +65,15 @@ def get_estimator():
     )
     
 
-    regressor = LGBMRegressor(learning_rate=0.1, n_estimators=3000, reg_lambda=7, max_depth=10, num_leaves=50)
+    regressor = CatBoostRegressor(
+        iterations=600,
+        learning_rate=0.1,
+        depth=10,
+        l2_leaf_reg=5,
+        bootstrap_type = "Bayesian",
+        bagging_temperature = 0.2,
+        random_strength=10
+    )
 
     pipe = make_pipeline(
         FunctionTransformer(_merge_external_data, validate=False),
