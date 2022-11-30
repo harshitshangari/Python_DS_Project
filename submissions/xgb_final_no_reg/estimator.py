@@ -1,5 +1,4 @@
 from pathlib import Path
-
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import FunctionTransformer
@@ -7,13 +6,12 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import Ridge
-from sklearn.ensemble import RandomForestRegressor
-import xgboost as xgb
 from xgboost.sklearn import XGBRegressor
-from sklearn.ensemble import BaggingRegressor, RandomForestRegressor, AdaBoostRegressor
-from sklearn.svm import SVR
 
+# dataset website: https://dev.meteostat.net/bulk/hourly.html#endpoints
+# dataset 2020 https://bulk.meteostat.net/v2/hourly/2020/07156.csv.gz
+# dataset 2021 https://bulk.meteostat.net/v2/hourly/2021/07156.csv.gz
+# license https://dev.meteostat.net/terms.html#license
 
 def _encode_dates(X):
     X = X.copy()  # modify a copy of X
@@ -48,27 +46,29 @@ def get_estimator():
     date_encoder = FunctionTransformer(_encode_dates)
     date_cols = ["year", "month", "day", "weekday", "hour"]
 
+    num_features = ['temp', 'dwpt', 'rhum', 'prcp', 'wdir', 'wspd', 'pres']
+
     categorical_encoder = OneHotEncoder(handle_unknown="ignore")
-    categorical_cols = ["counter_name", "site_name"]
+    categorical_cols = ["counter_name", "site_name", "season"]
+
+    rest_cols = ['holiday', 'weekend', 'is_night', 'lockdown1', 'lockdown2']
 
     preprocessor = ColumnTransformer(
         [
             ("date", OneHotEncoder(handle_unknown="ignore"), date_cols),
             ("cat", categorical_encoder, categorical_cols),
+            ("numf", StandardScaler(), num_features),
+            ("rem", 'passthrough', rest_cols)
         ]
     )
-    
 
-    regressor =  XGBRegressor(base_score=0.5, booster='gbtree', callbacks=None,
-             colsample_bylevel=1, colsample_bynode=1, colsample_bytree=0.7,
-             early_stopping_rounds=None, enable_categorical=False,
-             eval_metric=None, feature_types=None, gamma=0.1, gpu_id=-1,
-             grow_policy='depthwise', importance_type=None,
-             interaction_constraints='', learning_rate=0.2, max_bin=256,
-             max_cat_threshold=64, max_cat_to_onehot=4, max_delta_step=0,
-             max_depth=10, max_leaves=0, min_child_weight=7,
-             monotone_constraints='()', n_estimators=100,
-             num_parallel_tree=1, predictor='auto', random_state=0)
+    regressor = XGBRegressor(
+        colsample_bytree=0.4, eval_metric='rmse',
+        gamma=0.3, learning_rate=0.1,
+        max_cat_threshold=64, max_cat_to_onehot=4,
+        max_depth=9, min_child_weight=3,
+        n_estimators=200, random_state=0
+    )
 
     pipe = make_pipeline(
         FunctionTransformer(_merge_external_data, validate=False),

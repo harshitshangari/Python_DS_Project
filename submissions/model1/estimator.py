@@ -36,7 +36,7 @@ def _merge_external_data(X):
     # When using merge_asof left frame need to be sorted
     X["orig_index"] = np.arange(X.shape[0])
     X = pd.merge_asof(
-        X.sort_values("date"), df_ext.sort_values("date"), on="date"
+        X.sort_values("date"), df_ext[["date", "t"]].sort_values("date"), on="date"
     )
     # Sort back to the original order
     X = X.sort_values("orig_index")
@@ -67,7 +67,7 @@ def get_estimator():
              interaction_constraints='', learning_rate=0.2, max_bin=256,
              max_cat_threshold=64, max_cat_to_onehot=4, max_delta_step=0,
              max_depth=10, max_leaves=0, min_child_weight=7,
-             monotone_constraints='()', n_estimators=100,
+             monotone_constraints='()', n_estimators=500, n_jobs=-1,
              num_parallel_tree=1, predictor='auto', random_state=0)
 
     pipe = make_pipeline(
