@@ -55,7 +55,8 @@ def get_estimator():
     categorical_encoder = OneHotEncoder(handle_unknown="ignore")
     categorical_cols = ["counter_name", "site_name", "season"]
 
-    rest_cols = ['holiday', 'weekend', 'is_night', 'lockdown1', 'lockdown2']
+    rest_cols = ['holiday', 'weekend', 'is_night', 'lockdown1', 'lockdown2',
+    'month_sin', 'month_cos', 'hour_sin', 'hour_cos']
 
     preprocessor = ColumnTransformer(
         [
@@ -67,14 +68,7 @@ def get_estimator():
     )
     
 
-    regressor = CatBoostRegressor(
-        iterations=1000,
-        learning_rate=0.05,
-        depth=10,
-        l2_leaf_reg=10,
-        bootstrap_type = "Bayesian",
-        bagging_temperature = 0.5,
-        random_strength=5)
+    regressor = Ridge(alpha=1460)
 
     pipe = make_pipeline(
         FunctionTransformer(_merge_external_data, validate=False),
